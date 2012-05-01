@@ -29,18 +29,22 @@ class MainHandler(tornado.web.RequestHandler):
         """
         Saves original uploaded file, then file as png.
         """
-        fulln = self.request.files["image"][0]["filename"]
-        filen, ext = os.path.splitext(fulln)
-        # WHICH EXTENSIONS TO ACCEPT??? HANDLE HERE???
-        f = open("static/img/{0}".format(fulln), "w")
-        f.write(self.request.files["image"][0]['body'])
-        f.close()
-        # convert img to greyscale first (requirement of most thresholding functions)
-        image = gam.load_image("static/img/{0}".format(fulln))
-        image.save_image("static/img/{0}_original{1}".format(filen, ext))
-        image = image.to_greyscale()
-        image.save_PNG("static/img/{0}.png".format(filen))
-        self.redirect("/binarize?filen={0}.png".format(filen))
+        try:
+            fulln = self.request.files["image"][0]["filename"]
+            filen, ext = os.path.splitext(fulln)
+            # WHICH EXTENSIONS TO ACCEPT??? HANDLE HERE???
+            f = open("static/img/{0}".format(fulln), "w")
+            f.write(self.request.files["image"][0]['body'])
+            f.close()
+            # convert img to greyscale first (requirement of most thresholding functions)
+            image = gam.load_image("static/img/{0}".format(fulln))
+            image.save_image("static/img/{0}_original{1}".format(filen, ext))
+            image = image.to_greyscale()
+            image.save_PNG("static/img/{0}.png".format(filen))
+            self.redirect("/binarize?filen={0}.png".format(filen))
+        except KeyError:
+            self.write("No image selected")
+            self.redirect("/")
         
 class BinarizationHandler(tornado.web.RequestHandler):
     def is_xhr(self):
@@ -70,7 +74,7 @@ class BinarizationHandler(tornado.web.RequestHandler):
         
     def get(self):
         if not self.is_xhr():
-            # not an ajax request - redirect from index to binarize
+            # not an ajax request - show binarize page
             filen = self.get_argument("filen")
             self.render("templates/binarize.html", filen=filen)
         else:
