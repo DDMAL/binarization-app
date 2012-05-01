@@ -1,0 +1,33 @@
+<html>
+<head>
+    <title>Binarisation App</title>
+    <link href="http://ajax.googleapis.com/ajax/libs/jqueryui/1.8/themes/base/jquery-ui.css" rel="stylesheet" type="text/css"/>
+    <script src="http://ajax.googleapis.com/ajax/libs/jquery/1.5/jquery.min.js"></script>
+    <script src="http://ajax.googleapis.com/ajax/libs/jqueryui/1.8/jquery-ui.min.js"></script>
+    <script src="{{static_url("js/binarize.js")}}"></script>
+    <style type="text/css">
+        .ui-slider {
+            margin: 10px;
+            width: 700px;
+        }
+        
+        #selections {
+            margin: 10px
+        }
+    </style>
+</head>
+
+<body>
+    <h1>Look at your file!</h1>
+    
+    <img src="static/img/{{filen}}"><br />
+    <select id="selections">
+        <option value="sel">Make a selection</option>
+        <option value="sauvola">Sauvola</option>
+        <option value="niblack">Niblack</option>
+    </select>
+    
+    <div id="sliders"></div>
+    
+</body>
+</html>
