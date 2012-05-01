@@ -43,7 +43,6 @@ class MainHandler(tornado.web.RequestHandler):
             image.save_PNG("static/img/{0}.png".format(filen))
             self.redirect("/binarize?filen={0}.png".format(filen))
         except KeyError:
-            self.write("No image selected")
             self.redirect("/")
         
 class BinarizationHandler(tornado.web.RequestHandler):
