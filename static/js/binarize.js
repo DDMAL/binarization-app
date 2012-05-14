@@ -1,92 +1,64 @@
-$(document).ready (function() {
+var imageObj;
 
-    var originalImageSrc = $("img").attr("src");
-    $("#selections").change(function() {
-        // change sliders depending on option selected
-        var value = $("#selections option:selected").val();
-        var node = $("#sliders");
-        node.hide();
-        node.children().remove();
-        if (value =="sel") {
-            // "Make a selection" option - show original image
-            $("img").attr("src", originalImageSrc);
-        } else if (value == "sauvola") {
-            // show default image
-            $("img").attr("src", originalImageSrc);
-            // create sliders (hidden) with gamera default values
-            var s1 = newSliderDiv("regionSize");
-            var l1 = newLabel("Region size:");
-            createSlider(s1, 1, 50, 1, [15], false, function() {processImage(originalImageSrc)});
-            var s2 = newSliderDiv("sensitivity");
-            var l2 = newLabel("Sensitivity:");
-            createSlider(s2, 0, 1, 0.1, [0.5], false, function() {processImage(originalImageSrc)});
-            var s3 = newSliderDiv("dynamicRange");
-            var l3 = newLabel("Dynamic range:");
-            createSlider(s3, 1, 225, 1, [128], false, function() {processImage(originalImageSrc)});
-            var s4 = newSliderDiv("bounds");
-            var l4 = newLabel("Lower and upper bounds:");
-            createSlider(s4, 0, 255, 1, [20, 150], true, function() {processImage(originalImageSrc)});
-            node.append(l1, s1, l2, s2, l3, s3, l4, s4);
-            // show sliders and binarize image with default parameters
-            node.slideDown("fast", function() {
-                processImage(originalImageSrc);
-            });
-        } else if (value == "niblack") {
-            $("img").attr("src", originalImageSrc);
-            var s1 = newSliderDiv("regionSize");
-            var l1 = newLabel("Region size:");
-            createSlider(s1, 1, 50, 1, [15], false, function() {processImage(originalImageSrc)});
-            var s2 = newSliderDiv("sensitivity");
-            var l2 = newLabel("Sensitivity:");
-            createSlider(s2, -1, 1, 0.1, [-0.2], false, function() {processImage(originalImageSrc)});
-            var s3 = newSliderDiv("bounds");
-            var l3 = newLabel("Lower and upper bounds:");
-            createSlider(s3, 0, 255, 1, [20, 150], true, function() {processImage(originalImageSrc)});
-            node.append(l1, s1, l2, s2, l3, s3);
-            node.slideDown("fast", function() {
-                processImage(originalImageSrc);
-            });
+window.onload = function() {
+    var canvas = document.getElementById("imview");
+    var context = canvas.getContext("2d");
+    imageObj = new Image();
+    imageObj.onload = function() {
+        context.drawImage(this, 0, 0);
+    };
+    imageObj.src = "/static/images/sombrero.jpg";
+    $("#slider").slider({
+                        animate: true,
+                        min: 0,
+                        max: 1,
+                        orientation: "horizontal",
+                        step: 0.025,
+                        values: [0.5],
+                        range: false,
+                        change: function(event, ui) {binarize(ui.value)},
+                        });
+};
+
+binarize = function(thresh) {
+    var canvas = document.getElementById("imview");
+    var context = canvas.getContext("2d");
+    
+    context.drawImage(imageObj, 0, 0);
+    var imageData = context.getImageData(0, 0, canvas.width, canvas.height);
+    var data = imageData.data;
+    for (var i = 0; i < data.length; i +=4) {
+        var brightness = 0.2989 * data[i] + 0.5870 * data[i + 1] + 0.1140 * data[i + 2];
+        
+        data[i] = brightness;
+        data[i + 1] = brightness;
+        data[i + 2] = brightness;
+        
+        if (data[i] > (thresh * 255)) {
+            data[i] = 255;
+            data[i + 1] = 255;
+            data[i + 2] = 255;
         } else {
-            console.log(value);
+            data[i] = 0;
+            data[i + 1] = 0;
+            data[i + 2] = 0;
         }
-    });
+    }
     
-});
-
-createSlider = function(mySliderDiv, myMin, myMax, myStep, myValues, myRange, myFunction) {
-    // creates a jQuery slider using parameters passed in
-    mySliderDiv.slider({
-        min: myMin,
-        max: myMax,
-        step: myStep,
-        values: myValues,
-        range: myRange,
-        change: myFunction,
-    });
+    context.putImageData(imageData, 0, 0);
 }
 
-processImage = function(imgSrc) {
-    // puts data into object and send it as ajax request. 
-    var data = {}
-    data["selected"] = $("#selections option:selected").val();
-    data["filen"] = imgSrc;
-    $(".ui-slider").each(function() {
-        data[$(this).attr("id")] = $(this).slider("values");
-    });
-    $.get("binarize", {"data": JSON.stringify(data)}, function(newSrc) {
-        $("img").attr("src", newSrc)
-    });
-}
-
-newSliderDiv = function(sliderId) {
-    var d = $("<div>");
-    d.attr({id:sliderId});
-    return d
-}
-
-newLabel = function(label) {
-    var l = $("<label>");
-    l.text(label);
-    return l
-    
+readIMG = function(input) {
+    if (input.files && input.files[0]) {
+        var canvas = document.getElementById("imview");
+        var context = canvas.getContext("2d");
+        var imgprev = new Image();
+        var reader = new FileReader();
+        
+        reader.onload = function (e) {
+            imgprev.src = e.target.result;
+            context.drawImage(imgprev, 0, 0);
+        }
+        reader.readAsDataURL(input.files[0]);
+    }
 }
