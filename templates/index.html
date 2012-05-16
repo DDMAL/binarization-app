@@ -6,6 +6,19 @@
         <script src="http://ajax.googleapis.com/ajax/libs/jquery/1.5/jquery.min.js"></script>
         <script src="http://ajax.googleapis.com/ajax/libs/jqueryui/1.8/jquery-ui.min.js"></script>
         <script src="../static/js/binarize.js"></script>
+        <style type="text/css">
+            div.canvases
+            {
+                float:left;
+                white-space: nowrap;
+            }
+            div.canvases canvas
+            {
+                border-style:solid;
+                border-width:2px;
+                display:inline;
+            }
+        </style>
     </head>
     
     <body>
@@ -16,6 +29,9 @@
             <input type="submit" id="threshsend"></input>
         </form>
         <br>
-        <canvas id="imview" width=859 height=1111 alt="Image Preview"></canvas>
+        <div class="canvases">
+            <canvas id="imview" width=859 height=1111 alt="Image Preview"></canvas>
+            <canvas id="imorig" width=859 height=1111 alt="Original Image"></canvas>
+        </div>
     </body>
 </html>

@@ -6,8 +6,8 @@ var G = 255;
 var rScale = 0.2989;
 var gScale = 0.5870;
 var bScale = 0.1140;
-var widthLim = 1000;
-var heightLim = 1000;
+var widthLim = 750;
+var heightLim = 750;
 var imageObj;
 
 //Setup
@@ -37,6 +37,8 @@ initImage = function() {
     //Adjust size of canvas to fit image
     $("#imview").attr("width", imageObj.width);
     $("#imview").attr("height", imageObj.height);
+    $("#imorig").attr("width", imageObj.width);
+    $("#imorig").attr("height", imageObj.height);
     var pmf = genPMF(imageObj);
     defThresh = threshBrink(pmf);
     binarize(defThresh);
@@ -47,8 +49,10 @@ initImage = function() {
 
 //Binarizes data, splitting foreground and background at a given brightness level
 binarize = function(thresh) {
-    var canvas = document.getElementById("imview");
-    var context = canvas.getContext("2d");
+    var canvasA = document.getElementById("imview");
+    var contextA = canvasA.getContext("2d");
+    var canvasB = document.getElementById("imorig");
+    var contextB = canvasB.getContext("2d");
     $("#threshsend").attr("value", thresh);
     if (imageObj.width > widthLim || imageObj.height > heightLim) {
         var scaleValA = 0;
@@ -56,16 +60,20 @@ binarize = function(thresh) {
         scaleValA = widthLim / imageObj.width;
         scaleValB = heightLim / imageObj.height;
         var scaleVal = Math.min(scaleValA, scaleValB);
-        canvas.width = canvas.width * scaleVal;
-        canvas.height = canvas.height * scaleVal;
-       
+        canvasA.width = canvasA.width * scaleVal;
+        canvasA.height = canvasA.height * scaleVal;
+        canvasB.width = canvasB.width * scaleVal;
+        canvasB.height = canvasB.height * scaleVal;
         imageObj.height *= scaleVal;
         imageObj.width *= scaleVal;
-        context.scale(scaleVal, scaleVal);
+        contextA.scale(scaleVal, scaleVal);
+        contextB.scale(scaleVal, scaleVal);
+        
     }
     //Have to redraw image and then scrape data
-    context.drawImage(imageObj, 0, 0);
-    var imageData = context.getImageData(0, 0, canvas.width, canvas.height);
+    contextA.drawImage(imageObj, 0, 0);
+    contextB.drawImage(imageObj, 0, 0);
+    var imageData = contextA.getImageData(0, 0, canvasA.width, canvasA.height);
     var data = imageData.data;
     for (var i = 0; i < data.length; i +=4) {
         //Brightness is the greyscale value for the given pixel
@@ -83,7 +91,7 @@ binarize = function(thresh) {
         }
     }
     //Draw binarized image
-    context.putImageData(imageData, 0, 0);
+    contextA.putImageData(imageData, 0, 0);
 }
 
 // Generates a PMF (Probability Mass Function) for the given image
@@ -161,8 +169,6 @@ threshBrink = function(pmf) {
 
 readIMG = function(input) {
     if (input.files && input.files[0]) {
-        var canvas = document.getElementById("imview");
-        var context = canvas.getContext("2d");
         var reader = new FileReader();
         imageObj = new Image();
         imageObj.onload = initImage;
