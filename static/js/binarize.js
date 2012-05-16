@@ -29,33 +29,33 @@ window.onload = function() {
                         step: 1,
                         value: defThresh,
                         range: false,
-                        slide: function(event, ui) {binarize(ui.value, imageObj)},
+                        slide: function(event, ui) {binarize(ui.value)},
                         });
 };
 
 initImage = function() {
     //Adjust size of canvas to fit image
-    $("#imview").attr("width", this.width);
-    $("#imview").attr("height", this.height);
-    var pmf = genPMF(this);
+    $("#imview").attr("width", imageObj.width);
+    $("#imview").attr("height", imageObj.height);
+    var pmf = genPMF(imageObj);
     defThresh = threshBrink(pmf);
-    binarize(defThresh, this);
+    binarize(defThresh);
     
     //Manually set inital value for slider
     $("#slider").slider("value", defThresh);
 }
 
 //Binarizes data, splitting foreground and background at a given brightness level
-binarize = function(thresh, imageObj) {
+binarize = function(thresh) {
     var canvas = document.getElementById("imview");
     var context = canvas.getContext("2d");
     $("#threshsend").attr("value", thresh);
     if (imageObj.width > widthLim || imageObj.height > heightLim) {
-        var scaleVal = 0;
-        if (imageObj.width > widthLim)
-            scaleVal = widthLim / imageObj.width;
-        else if (imageObj.height > heightLim)
-            scaleVal = heightLim / imageObj.height;
+        var scaleValA = 0;
+        var scaleValB = 0;
+        scaleValA = widthLim / imageObj.width;
+        scaleValB = heightLim / imageObj.height;
+        var scaleVal = Math.min(scaleValA, scaleValB);
         canvas.width = canvas.width * scaleVal;
         canvas.height = canvas.height * scaleVal;
        
