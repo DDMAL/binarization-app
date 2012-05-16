@@ -45,6 +45,7 @@ initImage = function() {
     
     //Manually set inital value for slider
     $("#slider").slider("value", defThresh);
+    $("#slider").width(imageObj.width * 2);
 }
 
 //Binarizes data, splitting foreground and background at a given brightness level
