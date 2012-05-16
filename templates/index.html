@@ -10,9 +10,12 @@
     
     <body>
         <h1>Binarize</h1>
+        <input type="file" onchange="readIMG(this)"></input>
         <div id="slider"></div>
-        <div id="threshdisp"></div>
-        <br><br>
+        <form name="threshold" method="get">
+            <input type="submit" id="threshsend"></input>
+        </form>
+        <br>
         <canvas id="imview" width=859 height=1111 alt="Image Preview"></canvas>
     </body>
 </html>

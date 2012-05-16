@@ -6,26 +6,19 @@ var G = 255;
 var rScale = 0.2989;
 var gScale = 0.5870;
 var bScale = 0.1140;
+var widthLim = 1000;
+var heightLim = 1000;
+var imageObj;
 
 //Setup
 window.onload = function() {
-    var imageObj = new Image();
+    imageObj = new Image();
     //Calculate initial threshold with the Brink formula and draw binarized image
-    imageObj.onload = function() {
-        //Adjust size of canvas to fit image
-        $("#imview").attr("width", this.width);
-        $("#imview").attr("height", this.height);
-        
-        var pmf = genPMF(this);
-        defThresh = threshBrink(pmf);
-        binarize(defThresh, this);
-        
-        //Manually set inital value for slider
-        $("#slider").slider("value", defThresh);
-    };
+    imageObj.onload = initImage;
     
     //Image path (TO BE REPLACED LATER)
-    imageObj.src = "/static/images/sombrero.jpg";
+    imageObj.src = "/static/images/ISHAM_3558.15.39_0068.jpg";
+    //imageObj.src = imageScale(imageObj);
     
     //jQuery slider definition for threshold controller
     $("#slider").slider({
@@ -40,12 +33,36 @@ window.onload = function() {
                         });
 };
 
+initImage = function() {
+    //Adjust size of canvas to fit image
+    $("#imview").attr("width", this.width);
+    $("#imview").attr("height", this.height);
+    var pmf = genPMF(this);
+    defThresh = threshBrink(pmf);
+    binarize(defThresh, this);
+    
+    //Manually set inital value for slider
+    $("#slider").slider("value", defThresh);
+}
+
 //Binarizes data, splitting foreground and background at a given brightness level
 binarize = function(thresh, imageObj) {
     var canvas = document.getElementById("imview");
     var context = canvas.getContext("2d");
-    $("#threshdisp").text(thresh);
-    
+    $("#threshsend").attr("value", thresh);
+    if (imageObj.width > widthLim || imageObj.height > heightLim) {
+        var scaleVal = 0;
+        if (imageObj.width > widthLim)
+            scaleVal = widthLim / imageObj.width;
+        else if (imageObj.height > heightLim)
+            scaleVal = heightLim / imageObj.height;
+        canvas.width = canvas.width * scaleVal;
+        canvas.height = canvas.height * scaleVal;
+       
+        imageObj.height *= scaleVal;
+        imageObj.width *= scaleVal;
+        context.scale(scaleVal, scaleVal);
+    }
     //Have to redraw image and then scrape data
     context.drawImage(imageObj, 0, 0);
     var imageData = context.getImageData(0, 0, canvas.width, canvas.height);
@@ -109,14 +126,8 @@ meanBackground = function(T, pmf) {
     return mB;
 }
 
-//Take the log of a value for a given base
-logB = function(v, b) {
-    return Math.log(v) / Math.log(b);
-}
-
 //Brink thresholding function
 threshBrink = function(pmf) {
-    var base = 2;
     //Initial minVal to be reset in first iteration
     var minVal = -1;
     //Minimum-valued threshold encountered
@@ -127,15 +138,15 @@ threshBrink = function(pmf) {
         var lSum = 0;
         for (var g = 1; g <= T; g++) {
             mF = meanForeground(T, pmf);
-            var llog = mF * logB(mF / g, base);
-            var rlog = g * logB(g / mF, base);
+            var llog = mF * Math.log(mF / g);
+            var rlog = g * Math.log(g / mF);
             lSum += (pmf[g] * (llog + rlog));
         }
         var rSum = 0;
         for (var g = T + 1; g <= G; g++) {
             mB = meanBackground(T, pmf);
-            var llog = mB * logB(mB / g, base);
-            var rlog = g * logB(g / mB, base);
+            var llog = mB * Math.log(mB / g);
+            var rlog = g * Math.log(g / mB);
             rSum += (pmf[g] * (llog + rlog));
         }
         var total = lSum + rSum;
@@ -147,18 +158,17 @@ threshBrink = function(pmf) {
     return minT;
 }
 
-/*
+
 readIMG = function(input) {
     if (input.files && input.files[0]) {
         var canvas = document.getElementById("imview");
         var context = canvas.getContext("2d");
-        var imgprev = new Image();
         var reader = new FileReader();
-        
+        imageObj = new Image();
+        imageObj.onload = initImage;
         reader.onload = function (e) {
-            imgprev.src = e.target.result;
-            context.drawImage(imgprev, 0, 0);
+            imageObj.src = e.target.result;
         }
         reader.readAsDataURL(input.files[0]);
     }
-}*/
+}
