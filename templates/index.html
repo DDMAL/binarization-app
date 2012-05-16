@@ -7,6 +7,29 @@
         <script src="http://ajax.googleapis.com/ajax/libs/jqueryui/1.8/jquery-ui.min.js"></script>
         <script src="../static/js/binarize.js"></script>
         <style type="text/css">
+            body
+            {
+                align:center;
+            }
+            h1
+            {
+                text-align:center;
+            }
+            #threshsend
+            {
+                width:100px;
+                height:25px;
+                font-size:15px;
+            }
+            div.buttons
+            {
+                padding:10px;
+            }
+            div.buttons form
+            {
+                display:inline;
+                float:right;
+            }
             div.canvases
             {
                 float:left;
@@ -17,17 +40,20 @@
                 border-style:solid;
                 border-width:2px;
                 display:inline;
+                margin:-3px;
             }
         </style>
     </head>
     
     <body>
         <h1>Binarize</h1>
-        <input type="file" onchange="readIMG(this)"></input>
+        <div class="buttons">
+            <input type="file" onchange="readIMG(this)"></input>
+            <form name="threshold" method="get">
+                <input type="submit" id="threshsend"></input>
+            </form>
+        </div>
         <div id="slider"></div>
-        <form name="threshold" method="get">
-            <input type="submit" id="threshsend"></input>
-        </form>
         <br>
         <div class="canvases">
             <canvas id="imview" width=859 height=1111 alt="Image Preview"></canvas>
