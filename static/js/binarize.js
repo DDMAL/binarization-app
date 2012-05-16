@@ -86,9 +86,9 @@ binarize = function(thresh) {
             data[i + 1] = G;
             data[i + 2] = G;
         } else {
-            data[i] = 0;
-            data[i + 1] = 0;
-            data[i + 2] = 0;
+            //data[i] = 0;
+            //data[i + 1] = 0;
+            //data[i + 2] = 0;
         }
     }
     //Draw binarized image
