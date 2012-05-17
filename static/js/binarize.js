@@ -39,23 +39,11 @@ initImage = function() {
     $("#imview").attr("height", imageObj.height);
     $("#imorig").attr("width", imageObj.width);
     $("#imorig").attr("height", imageObj.height);
-    var pmf = genPMF(imageObj);
-    defThresh = threshBrink(pmf);
-    binarize(defThresh);
-    
-    //Manually set inital value for slider
-    $("#slider").slider("value", defThresh);
-    $("#slider").width(imageObj.width * 2);
-}
-
-//Binarizes data, splitting foreground and background at a given brightness level
-binarize = function(thresh) {
-    var canvasA = document.getElementById("imview");
-    var contextA = canvasA.getContext("2d");
-    var canvasB = document.getElementById("imorig");
-    var contextB = canvasB.getContext("2d");
-    $("#threshsend").attr("value", thresh);
     if (imageObj.width > widthLim || imageObj.height > heightLim) {
+        var canvasA = document.getElementById("imview");
+        var contextA = canvasA.getContext("2d");
+        var canvasB = document.getElementById("imorig");
+        var contextB = canvasB.getContext("2d");
         var scaleValA = 0;
         var scaleValB = 0;
         scaleValA = widthLim / imageObj.width;
@@ -69,11 +57,27 @@ binarize = function(thresh) {
         imageObj.width *= scaleVal;
         contextA.scale(scaleVal, scaleVal);
         contextB.scale(scaleVal, scaleVal);
-        
+        contextB.drawImage(imageObj, 0, 0);
     }
+    var pmf = genPMF(imageObj);
+    defThresh = threshBrinkJ(pmf);
+    binarize(defThresh);
+
+    //Manually set inital value for slider
+    $("#slider").slider("value", defThresh);
+    $("#slider").width(imageObj.width * 2);
+}
+
+//Binarizes data, splitting foreground and background at a given brightness level
+binarize = function(thresh) {
+    var canvasA = document.getElementById("imview");
+    var contextA = canvasA.getContext("2d");
+    var canvasB = document.getElementById("imorig");
+    var contextB = canvasB.getContext("2d");
+    $("#threshsend").attr("value", thresh);
+    
     //Have to redraw image and then scrape data
     contextA.drawImage(imageObj, 0, 0);
-    contextB.drawImage(imageObj, 0, 0);
     var imageData = contextA.getImageData(0, 0, canvasA.width, canvasA.height);
     var data = imageData.data;
     for (var i = 0; i < data.length; i +=4) {
@@ -85,10 +89,6 @@ binarize = function(thresh) {
             data[i] = G;
             data[i + 1] = G;
             data[i + 2] = G;
-        } else {
-            //data[i] = 0;
-            //data[i + 1] = 0;
-            //data[i + 2] = 0;
         }
     }
     //Draw binarized image
@@ -167,15 +167,127 @@ threshBrink = function(pmf) {
     return minT;
 }
 
+threshBrinkJ = function(pmf) {
+    var Topt = 0;
+    var locMin;
+    var isMinInit = 0;
+    
+    var mF = new Array(256);
+    var mB = new Array(256);
+    
+    var tmpVec1 = new Array(256);
+    var tmpVec2 = new Array(256);
+    var tmpVec3 = new Array(256);
+    
+    var tmp1 = new Array(256);
+    var tmp2 = new Array(256);
+    var tmp3 = new Array(256);
+    var tmp4 = new Array(256);
+    
+    var tmpMat1 = new Array(256);
+    var tmpMat2 = new Array(256);
+    
+    for (var i = 0; i < 256; i++) {
+        tmp1[i] = new Array(256);
+        tmp2[i] = new Array(256);
+        tmp3[i] = new Array(256);
+        tmp4[i] = new Array(256);
+        
+        tmpMat1[i] = new Array(256);
+        tmpMat2[i] = new Array(256);
+    }
+    
+    mF[0] = 0.0;
+    for (var i = 1; i < 256; i++)
+        mF[i] = i * pmf[i] + mF[i - 1];
+    mB = mF.slice(0);
+    
+    for (var i = 0; i < 256; i++)
+        mB[i] = mF[255] - mB[i];
+    
+    for (var i = 0; i < 256; i++) {
+        for (var j = 0; j < 256; j++) {
+            tmp1[i][j] = mF[j] / i;
+            if ((mF[j] == 0) || (i == 0)) {
+                tmp2[i][j] = 0.0;
+                tmp3[i][j] = 0.0;
+            } else {
+                tmp2[i][j] = Math.log(tmp1[i][j]);
+                tmp3[i][j] = Math.log(1.0 / tmp1[i][j]);
+            }
+            tmp4[i][j] = pmf[i] * (mF[j] * tmp2[i][j] + i * tmp3[i][j]);
+        }
+    }
+    tmpMat1[0] = tmp4[0].slice(0);
+
+    for (var i = 1; i < 256; i++)
+        for (var j = 0; j < 256; j++)
+            tmpMat1[i][j] = tmpMat1[i - 1][j] + tmp4[i][j];
+    for (var i = 0; i < 256; i++)
+        tmpVec1[i] = tmpMat1[i][i];
+    
+    
+    for (var i = 0; i < 256; i++) {
+        for (var j = 0; j < 256; j++) {
+            tmp1[i][j] = mB[j] / i;
+            if ((mB[j] == 0) || (i == 0)) {
+                tmp2[i][j] = 0.0;
+                tmp3[i][j] = 0.0;
+            } else {
+                tmp2[i][j] = Math.log(tmp1[i][j]);
+                tmp3[i][j] = Math.log(1.0 / tmp1[i][j]);
+            }
+            tmp4[i][j] = pmf[i] * (mB[j] * tmp2[i][j] + i * tmp3[i][j]);
+        }
+    }
+    
+    tmpVec2 = tmp4[0].slice(0);
+    
+    for (var i = 0; i < 256; i++)
+        for (var j = 0; j < 256; j++)
+            tmpVec2[j] += tmp4[i][j];
+    
+    tmpMat2[0] = tmp4[0].slice(0);
+    
+    for (var i = 1; i < 256; i++)
+        for (var j = 0; j < 256; j++)
+            tmpMat2[i][j] = tmpMat2[i - 1][j] + tmp4[i][j];
+    for (var i = 0; i < 256; i++)
+        tmpVec3[i] = tmpMat2[i][i];
+    
+    for (var i = 0; i < 256; i++)
+        tmpVec2[i] -= tmpVec3[i];
+    for (var i = 0; i < 256; i++)
+        tmpVec1[i] += tmpVec2[i];
+    
+    for (var i = 0; i < 256; i++) {
+        if (mF[i] != 0 && mB[i] != 0) {
+            if ((isMinInit == 0) || (tmpVec1[i] < locMin)) {
+                isMinInit = 1;
+                locMin = tmpVec1[i];
+                Topt = i;
+            }
+        }
+    }
+    
+    return Topt;
+}
+
 
 readIMG = function(input) {
-    if (input.files && input.files[0]) {
-        var reader = new FileReader();
-        imageObj = new Image();
-        imageObj.onload = initImage;
-        reader.onload = function (e) {
-            imageObj.src = e.target.result;
+    if (window.FileReader) {
+        if (input.files && input.files[0]) {
+            var reader = new FileReader();
+            imageObj = new Image();
+            imageObj.onload = initImage;
+            reader.onload = function (e) {
+                imageObj.src = e.target.result;
+                $("#img_url").attr("value", e.target.result);
+                
+            }
+            reader.readAsDataURL(input.files[0]);
         }
-        reader.readAsDataURL(input.files[0]);
+    } else {
+        alert ("FileReader is not supported by this browser.");
     }
 }

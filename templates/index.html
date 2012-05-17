@@ -47,9 +47,9 @@
     <body>
         <h1>Binarize</h1>
         <div class="buttons">
-            <input type="file" onchange="readIMG(this)"></input>
-            <form name="threshold" method="get">
-                <input type="submit" id="threshsend"></input>
+            <form name="threshold" method="post">
+                <input name="img_url" type="file" id="img_url" onchange="readIMG(this)"></input>
+                <input name="thresh_value" type="submit" id="threshsend"></input>
             </form>
         </div>
         <div id="slider"></div>
