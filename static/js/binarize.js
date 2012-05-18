@@ -9,6 +9,7 @@ var bScale = 0.1140;
 var widthLim = 750;
 var heightLim = 750;
 var imageObj;
+var globalThresh = 0;
 
 //Setup
 window.onload = function() {
@@ -17,7 +18,7 @@ window.onload = function() {
     imageObj.onload = initImage;
     
     //Image path (TO BE REPLACED LATER)
-    imageObj.src = "/static/images/ISHAM_3558.15.39_0068.jpg";
+    imageObj.src = "/static/images/ISHAM_3558.15.39_0068.png";
     //imageObj.src = imageScale(imageObj);
     
     //jQuery slider definition for threshold controller
@@ -31,6 +32,17 @@ window.onload = function() {
                         range: false,
                         slide: function(event, ui) {binarize(ui.value)},
                         });
+    
+    $("#threshsend").click(function () {
+                           $.ajax({
+                                  type: "POST",
+                                  data: {
+                                            img_url:      imageObj.src.replace("http://localhost:8888", "."),
+                                            thresh_value: globalThresh
+                                        },
+                                  url: "/binarize/simplethreshold"
+                                  });
+                           });
 };
 
 initImage = function() {
@@ -75,7 +87,7 @@ binarize = function(thresh) {
     var canvasB = document.getElementById("imorig");
     var contextB = canvasB.getContext("2d");
     $("#threshsend").attr("value", thresh);
-    
+    globalThresh = thresh;
     //Have to redraw image and then scrape data
     contextA.drawImage(imageObj, 0, 0);
     var imageData = contextA.getImageData(0, 0, canvasA.width, canvasA.height);
@@ -89,6 +101,10 @@ binarize = function(thresh) {
             data[i] = G;
             data[i + 1] = G;
             data[i + 2] = G;
+        } else {
+            data[i] = 0;
+            data[i + 1] = 0;
+            data[i + 2] = 0;
         }
     }
     //Draw binarized image
